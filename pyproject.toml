@@ -1,0 +1,52 @@
+[tool.poetry]
+name = "autoquantnx"
+version = "0.1.0"
+description = "Webapp to quantize and convert to ONNX HF models in go and compare them"
+authors = ["kartikbhtt7 <kartikbhtt7@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = ">=3.10,<3.12"
+gradio = "^3.42.0"
+transformers = "^4.31.0"
+pandas = "^2.2.2"
+torch = "^2.3.0"
+onnx = "^1.16.2"
+onnxruntime = "^1.18.1"
+onnxconverter-common = ">=1.14.0"
+optimum = "^1.21.3"
+huggingface-hub = "^0.24.6"
+sentence-transformers = "^3.0.1"
+bitsandbytes = "^0.43.3"
+evaluate = "^0.4.0"
+faiss-gpu = "^1.7.2"
+faiss-cpu = "^1.8.0.post1"
+azure-cognitiveservices-speech = "^1.40.0"
+gdown = "^5.2.0"
+jiwer = "^3.0.4"
+pydub = "^0.25.1"
+librosa = "^0.10.2.post1"
+soundfile = "^0.12.1"
+catalogue = "^2.0.10"
+langchain-core = "^0.1.40"
+langchain-openai = "^0.1.0"
+fast-pytorch-kmeans = "^0.2.0.1"
+typing-extensions = "^4.12.2"
+textwrap3 = "^0.9.2"
+pynvml = "^11.5.3"
+psutil = "^6.1.1"
+
+[tool.poetry.dev-dependencies]
+black = "^23.7.0"
+flake8 = "^6.1.0"
+pytest = "^7.4.3"
+pytest-asyncio = "^0.21.1"
+pytest-django = "^4.8.0"
+pytest-cov = "^4.1.0"
+pytest-testmon = "^2.1.0"
+pytest-watch = "^4.2.0"
+coverage = "^7.3.2"
+
+[build-system]
+requires = ["poetry>=1.5.1"]
+build-backend = "poetry.core.masonry.api"

@@ -1,0 +1,15 @@
+torch
+transformers
+accelerate
+bitsandbytes
+optimum
+scikit-learn
+onnx
+onnxruntime
+onnxconverter-common
+gradio
+huggingface-hub
+numpy
+tqdm
+coloredlogs
+python-dotenv
