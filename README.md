@@ -45,10 +45,35 @@ logic
 
 ## Prerequisites
 
+### Using requirements.txt
 1. Python 3.8 or higher
 2. Install dependencies:
    ```bash
    pip install -r requirements.txt
+   ```
+
+### Using Poetry
+1. Install Poetry (if not already installed):
+
+   if linux:
+      ```bash
+      Use curl -sSL https://install.python-poetry.org | python3 -
+      ```
+   else:
+
+      Follow the official instructions to install Poetry on your system:
+      ```bash
+      https://python-poetry.org/docs/#installation
+      ```
+
+2. Install Dependencies: Navigate to the project directory and run the following command to install all the required dependencies using Poetry:
+   ```bash
+   poetry install
+   ```
+
+3. Activate the Virtual Environment: Poetry automatically creates a virtual environment for the project. To activate it, run:
+   ```bash
+   poetry shell
    ```
 
 ## Usage
