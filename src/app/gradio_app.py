@@ -11,8 +11,8 @@ from transformers import (
 from huggingface_hub import HfApi
 import logging
 from typing import Tuple, Dict, Any
-from utilities import ResourceManager, push_to_hub
-from model_handlers import get_model_handler
+from src.utilities.utilities import ResourceManager, push_to_hub
+from src.model_handlers_temp import get_model_handler
 from onnx_conversion import convert_to_onnx, quantize_onnx_model
 
 logging.basicConfig(level=logging.INFO)
