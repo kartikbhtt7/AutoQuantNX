@@ -1,40 +1,13 @@
 import gradio as gr
-import torch
-from transformers import (
-    AutoModel,
-    AutoModelForTokenClassification,
-    AutoModelForSequenceClassification,
-    AutoModelForQuestionAnswering,
-    AutoModelForCausalLM,
-    WhisperForConditionalGeneration,
-)
-from huggingface_hub import HfApi
 import logging
 from typing import Tuple, Dict, Any
-from src.utilities.utilities import ResourceManager, push_to_hub
-from src.model_handlers_temp import get_model_handler
-from onnx_conversion import convert_to_onnx, quantize_onnx_model
+from utilities.resources import ResourceManager
+from utilities.push_to_hub import push_to_hub
+from optimizations.onnx_conversion import convert_to_onnx, quantize_onnx_model
+from handlers import get_model_handler, TASK_CONFIGS
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
-MODEL_CLASSES = {
-    "embedding_finetuning": AutoModel,
-    "ner": AutoModelForTokenClassification,
-    "text_classification": AutoModelForSequenceClassification,
-    "whisper_finetuning": WhisperForConditionalGeneration,
-    "question_answering": AutoModelForQuestionAnswering,
-    "causal_lm": AutoModelForCausalLM,
-}
-
-EXAMPLE_TEXTS = {
-    "text_classification": "This movie was great!",
-    "ner": "John works at Google in New York",
-    "question_answering": "Context: The pyramids were built in ancient Egypt. Q: When were the pyramids built?",
-    "causal_lm": "Once upon a time",
-    "embedding_finetuning": "This is amazing!",
-    "whisper_finetuning": "!!!WORKING ON THIS!!!",
-}
 
 def process_model(
     model_name: str,
@@ -73,12 +46,11 @@ def process_model(
             status_updates.append(f"Applying {quantization_type} quantization")
 
             if not test_text:
-                test_text = EXAMPLE_TEXTS.get(task, "Sample text for testing")
+                test_text = TASK_CONFIGS[task]["example_text"]
 
             try:
-                model_class = MODEL_CLASSES[task]
-                handler = get_model_handler(task, model_name, model_class, quantization_type, test_text)
-                quantized_model = handler.quantize_and_compare()
+                handler = get_model_handler(task, model_name, quantization_type, test_text)
+                quantized_model = handler.compare()
 
                 quantized_model_path = str(resource_manager.temp_dirs["quantized"] / "model")
                 quantized_model.save_pretrained(quantized_model_path)
@@ -162,7 +134,7 @@ with gr.Blocks(theme=gr.themes.Soft()) as app:
     with gr.Row():
         with gr.Column(scale=2):
             model_name = gr.Textbox(label="Model Name", placeholder="e.g., bert-base-uncased")
-            task = gr.Dropdown(choices=list(MODEL_CLASSES.keys()), label="Task", value="text_classification")
+            task = gr.Dropdown(choices=list(TASK_CONFIGS.keys()), label="Task", value="text_classification")
 
             with gr.Group():
                 gr.Markdown("### Quantization Settings")
@@ -208,7 +180,7 @@ with gr.Blocks(theme=gr.themes.Soft()) as app:
         return resource_manager.get_memory_info()
 
     quantization_type.change(lambda x: gr.update(visible=x != "None"), inputs=[quantization_type], outputs=[test_text])
-    task.change(lambda x: gr.update(value=EXAMPLE_TEXTS.get(x, "")), inputs=[task], outputs=[test_text])
+    task.change(lambda x: gr.update(value=TASK_CONFIGS[x]["example_text"]), inputs=[task], outputs=[test_text])
     enable_onnx.change(lambda x: gr.update(visible=x), inputs=[enable_onnx], outputs=[onnx_group])
 
     convert_btn.click(
@@ -220,4 +192,4 @@ with gr.Blocks(theme=gr.themes.Soft()) as app:
     cleanup_btn.click(lambda: ResourceManager().cleanup_temp_files(), outputs=[message_output]).then(update_memory_info, outputs=[memory_info])
 
 if __name__ == "__main__":
-    app.launch(server_name="0.0.0.0", server_port=7860, share=True)
+    app.launch(server_name="0.0.0.0", server_port=7860, share=True, debug=True)

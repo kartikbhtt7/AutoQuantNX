@@ -27,3 +27,33 @@ class QuestionAnsweringHandler(ModelHandler):
         input_ids = self.tokenizer.encode(self.test_text)
         answer = self.tokenizer.decode(input_ids[answer_start:answer_end])
         return f"Answer: {answer}"
+
+    def compare_outputs(self, original_outputs, quantized_outputs):
+        """Compare outputs for question answering models"""
+        if original_outputs is None or quantized_outputs is None:
+            return None
+        
+        orig_start = original_outputs.start_logits.cpu().numpy()
+        orig_end = original_outputs.end_logits.cpu().numpy()
+        quant_start = quantized_outputs.start_logits.cpu().numpy()
+        quant_end = quantized_outputs.end_logits.cpu().numpy()
+        
+        orig_start_pos = orig_start.argmax()
+        orig_end_pos = orig_end.argmax()
+        quant_start_pos = quant_start.argmax()
+        quant_end_pos = quant_end.argmax()
+
+        input_ids = self.tokenizer.encode(self.test_text)
+        original_answer = self.tokenizer.decode(input_ids[orig_start_pos:orig_end_pos + 1])
+        quantized_answer = self.tokenizer.decode(input_ids[quant_start_pos:quant_end_pos + 1])
+            
+        metrics = {
+            'original_answer': original_answer,
+            'quantized_answer': quantized_answer,
+            'start_position_match': float(orig_start_pos == quant_start_pos),
+            'end_position_match': float(orig_end_pos == quant_end_pos),
+            'start_logits_mse': ((orig_start - quant_start) ** 2).mean(),
+            'end_logits_mse': ((orig_end - quant_end) ** 2).mean(),
+        }
+    
+        return metrics
