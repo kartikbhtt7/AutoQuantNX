@@ -2,8 +2,16 @@ from optimizations.quantize import ModelQuantizer
 import torch
 import logging
 import numpy as np
+from dataclasses import dataclass
+from typing import Dict, Any, Optional
 
 logger = logging.getLogger(__name__)
+
+@dataclass
+class ModelMetrics:
+    model_sizes: Dict[str, float]
+    inference_times: Dict[str, float]
+    comparison_metrics: Dict[str, Any]
 
 class ModelHandler:
     """Base class for handling different types of models"""
@@ -18,7 +26,8 @@ class ModelHandler:
         # Load models
         self.original_model = self._load_original_model()
         self.quantized_model = self._load_quantized_model()
-    
+        self.metrics: Optional[ModelMetrics] = None
+
     def _load_original_model(self):
         """Load the original model"""
         model = self.model_class.from_pretrained(self.model_name)
@@ -34,6 +43,17 @@ class ModelHandler:
         if self.quantization_type not in ["4-bit", "8-bit"]:
             model = model.to(self.device)
         return model
+
+    @staticmethod
+    def _convert_to_serializable(obj):
+        """Convert numpy types to Python native types for JSON serialization"""
+        if isinstance(obj, (np.float32, np.float64)):
+            return float(obj)
+        elif isinstance(obj, (np.int32, np.int64)):
+            return int(obj)
+        elif isinstance(obj, np.ndarray):
+            return obj.tolist()
+        return obj
 
     def _format_metric_value(self, value):
         """Format metric value based on its type"""
@@ -76,16 +96,31 @@ class ModelHandler:
             logger.info(f"Quantized Inference Time: {quantized_time:.4f} seconds")
 
             # Compare outputs
-            comparison_metrics = self.compare_outputs(
-                original_outputs, 
-                quantized_outputs
-            )
-            if comparison_metrics:
-                for metric, value in comparison_metrics.items():
-                    formatted_value = self._format_metric_value(value)
-                    logger.info(f"{metric}: {formatted_value}")
+            comparison_metrics = self.compare_outputs(original_outputs, quantized_outputs) or {}
+
+            for key, value in comparison_metrics.items():
+                comparison_metrics[key] = self._convert_to_serializable(value)
+
+            self.metrics = {
+                "model_sizes": {
+                    "original": float(original_size),
+                    "quantized": float(quantized_size)
+                },
+                "inference_times": {
+                    "original": float(original_time),
+                    "quantized": float(quantized_time)
+                },
+                "comparison_metrics": comparison_metrics
+            }
 
             return self.quantized_model
         except Exception as e:
             logger.error(f"Quantization and comparison failed: {str(e)}")
             raise e
+
+    def get_metrics(self) -> Dict[str, Any]:
+        """Return the metrics dictionary"""
+        if self.metrics is None:
+            raise ValueError("No metrics available.")
+        return self.metrics
+    

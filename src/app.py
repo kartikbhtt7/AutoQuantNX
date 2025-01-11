@@ -5,7 +5,7 @@ from utilities.resources import ResourceManager
 from utilities.push_to_hub import push_to_hub
 from optimizations.onnx_conversion import convert_to_onnx, quantize_onnx_model
 from handlers import get_model_handler, TASK_CONFIGS
-
+import numpy as np
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -18,7 +18,7 @@ def process_model(
     hf_token: str,
     repo_name: str,
     test_text: str
-) -> Tuple[Dict[str, Any], str]:
+) -> Tuple[Dict[str, Any], str, Dict[str, Any]]:
     try:
         resource_manager = ResourceManager()
         status_updates = []
@@ -29,11 +29,11 @@ def process_model(
         }
 
         if not model_name or not hf_token or not repo_name:
-            return {
-                "status": "Error",
-                "progress": 0,
-                "current_step": "Validation Failed",
-            }, "Model name, HuggingFace token, and repository name are required."
+            return (
+                {"status": "Error", "progress": 0, "current_step": "Validation Failed"},
+                "Model name, HuggingFace token, and repository name are required.",
+                {}
+            )
 
         status["progress"] = 0.2
         status["current_step"] = "Initialization"
@@ -51,17 +51,18 @@ def process_model(
             try:
                 handler = get_model_handler(task, model_name, quantization_type, test_text)
                 quantized_model = handler.compare()
+                metrics = handler.get_metrics()
 
                 quantized_model_path = str(resource_manager.temp_dirs["quantized"] / "model")
                 quantized_model.save_pretrained(quantized_model_path)
                 status_updates.append("Quantization completed successfully")
             except Exception as e:
                 logger.error(f"Quantization error: {str(e)}", exc_info=True)
-                return {
-                    "status": "Error",
-                    "progress": 0.4,
-                    "current_step": "Quantization Failed",
-                }, f"Quantization failed: {str(e)}"
+                return (
+                    {"status": "Error", "progress": 0.4, "current_step": "Quantization Failed"},
+                    f"Quantization failed: {str(e)}",
+                    {}
+                )
 
         if enable_onnx:
             status.update({"progress": 0.6, "current_step": "ONNX Conversion"})
@@ -86,7 +87,7 @@ def process_model(
                 status_updates.append("Pushing ONNX model to Hub")
                 result, push_message = push_to_hub(
                     local_path=output_dir,
-                    repo_name=f"{repo_name}-onnx",
+                    repo_name=f"{repo_name}-optimized",
                     hf_token=hf_token,
                     tags=["onnx", "optimum", task],
                 )
@@ -104,7 +105,7 @@ def process_model(
             status_updates.append("Pushing quantized model to Hub")
             result, push_message = push_to_hub(
                 local_path=quantized_model_path,
-                repo_name=f"{repo_name}-quantized",
+                repo_name=f"{repo_name}-optimized",
                 hf_token=hf_token,
                 tags=["quantized", task, quantization_type],
             )
@@ -114,15 +115,19 @@ def process_model(
         cleanup_message = resource_manager.cleanup_temp_files()
         status_updates.append(cleanup_message)
 
-        return status, "\n".join(status_updates)
+        return (
+            status,
+            "\n".join(status_updates),
+            metrics
+        )
 
     except Exception as e:
         logger.error(f"Error during processing: {str(e)}", exc_info=True)
-        return {
-            "status": "Error",
-            "progress": 0,
-            "current_step": "Process Failed",
-        }, f"An error occurred: {str(e)}"
+        return (
+            {"status": "Error", "progress": 0, "current_step": "Process Failed"},
+            f"An error occurred: {str(e)}",
+            {}
+        )
 
 # Gradio Interface
 with gr.Blocks(theme=gr.themes.Soft()) as app:
@@ -156,8 +161,12 @@ with gr.Blocks(theme=gr.themes.Soft()) as app:
             status_output = gr.JSON(label="Status", value={"status": "Ready", "progress": 0, "current_step": "Waiting"})
             progress_bar = gr.Progress()
             message_output = gr.Markdown(label="Progress Messages")
-            memory_info = gr.JSON(label="Resource Usage")
 
+            gr.Markdown("### Metrics")
+            with gr.Box():
+                metrics_output = gr.JSON(show_label=True)
+
+            memory_info = gr.JSON(label="Resource Usage")
             convert_btn = gr.Button("🚀 Start Conversion", variant="primary")
             cleanup_btn = gr.Button("🧹 Cleanup Files", variant="secondary")
 
@@ -186,8 +195,8 @@ with gr.Blocks(theme=gr.themes.Soft()) as app:
     convert_btn.click(
         process_model,
         inputs=[model_name, task, quantization_type, enable_onnx, onnx_quantization, hf_token, repo_name, test_text],
-        outputs=[status_output, message_output]
-    ).then(update_memory_info, outputs=[memory_info])
+        outputs=[status_output, message_output, metrics_output]
+    )
 
     cleanup_btn.click(lambda: ResourceManager().cleanup_temp_files(), outputs=[message_output]).then(update_memory_info, outputs=[memory_info])
 
