@@ -3,7 +3,8 @@ import logging
 from typing import Tuple, Dict, Any
 from utilities.resources import ResourceManager
 from utilities.push_to_hub import push_to_hub
-from optimizations.onnx_conversion import convert_to_onnx, quantize_onnx_model
+from optimizations.onnx_conversion import convert_to_onnx
+from optimizations.quantize import quantize_onnx_model
 from handlers import get_model_handler, TASK_CONFIGS
 import numpy as np
 logging.basicConfig(level=logging.INFO)

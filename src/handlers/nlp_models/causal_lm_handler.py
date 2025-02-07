@@ -1,9 +1,8 @@
-from .base_handler import ModelHandler
+from ..base_handler import ModelHandler
 from transformers import AutoTokenizer
 import torch
 import time
 from scipy.stats import spearmanr
-from sklearn.metrics.pairwise import cosine_similarity
 import numpy as np
 
 class CausalLMHandler(ModelHandler):

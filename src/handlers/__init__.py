@@ -1,10 +1,14 @@
 from .base_handler import ModelHandler
-from .sequence_classification_handler import SequenceClassificationHandler
-from .question_answering_handler import QuestionAnsweringHandler
-from .token_classification_handler import TokenClassificationHandler
-from .causal_lm_handler import CausalLMHandler
-from .embedding_model_handler import EmbeddingModelHandler
-from .whisper_handler import WhisperHandler
+from .nlp_models.sequence_classification_handler import SequenceClassificationHandler
+from .nlp_models.question_answering_handler import QuestionAnsweringHandler
+from .nlp_models.token_classification_handler import TokenClassificationHandler
+from .nlp_models.causal_lm_handler import CausalLMHandler
+from .nlp_models.embedding_model_handler import EmbeddingModelHandler
+from .audio_models.whisper_handler import WhisperHandler
+from .masked_lm_handler import MaskedLMHandler
+from .seq2seq_lm_handler import Seq2SeqLMHandler
+from .multiple_choice_handler import MultipleChoiceHandler
+from .img_models.image_classification_handler import ImageClassificationHandler
 
 from transformers import (
     AutoModel,
@@ -12,29 +16,26 @@ from transformers import (
     AutoModelForSequenceClassification,
     AutoModelForQuestionAnswering,
     AutoModelForCausalLM,
-    WhisperForConditionalGeneration,
+    AutoModelForMaskedLM,
+    AutoModelForSeq2SeqLM,
+    AutoModelForMultipleChoice,
 )
 
 TASK_CONFIGS = {
     "embedding_finetuning": {
         "model_class": AutoModel,
         "handler_class": EmbeddingModelHandler,
-        "example_text": "This is amazing!",
+        "example_text": "Hey, I am feeling way to good to be true.",
     },
     "ner": {
         "model_class": AutoModelForTokenClassification,
         "handler_class": TokenClassificationHandler,
-        "example_text": "John works at Google in New York",
+        "example_text": "John works at Google in New York as a software engineer.",
     },
     "text_classification": {
         "model_class": AutoModelForSequenceClassification,
         "handler_class": SequenceClassificationHandler,
-        "example_text": "This movie was great!",
-    },
-    "whisper_finetuning": {
-        "model_class": WhisperForConditionalGeneration,
-        "handler_class": WhisperHandler,
-        "example_text": "!!!WORKING ON THIS!!!",
+        "example_text": "This movie was great and I loved it.",
     },
     "question_answering": {
         "model_class": AutoModelForQuestionAnswering,
@@ -44,7 +45,32 @@ TASK_CONFIGS = {
     "causal_lm": {
         "model_class": AutoModelForCausalLM,
         "handler_class": CausalLMHandler,
-        "example_text": "Once upon a time",
+        "example_text": "Once upon a time, there was ",
+    },
+    "mask_lm": {
+        "model_class": AutoModelForMaskedLM,
+        "handler_class": MaskedLMHandler,
+        "example_text": "The quick brown [MASK] jumps over the lazy dog.",
+    },
+    "seq2seq_lm": {
+        "model_class": AutoModelForSeq2SeqLM,
+        "handler_class": Seq2SeqLMHandler,
+        "example_text": "Translate English to French: The house is wonderful.",
+    },
+    "multiple_choice": {
+        "model_class": AutoModelForMultipleChoice,
+        "handler_class": MultipleChoiceHandler,
+        "example_text": "What is the capital of France? (A) Paris (B) London (C) Berlin (D) Rome",
+    },
+    "whisper_finetuning": {
+        "model_class": None, # Not implemented
+        "handler_class": WhisperHandler,
+        "example_text": "!!!!!NOT IMPLEMENTED!!!!!",
+    },
+    "image_classification": {
+        "model_class": None,  # Not implemented
+        "handler_class": ImageClassificationHandler,
+        "example_text": "!!!!!NOT IMPLEMENTED!!!!!",
     },
 }
 

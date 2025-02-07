@@ -1,4 +1,4 @@
-from .base_handler import ModelHandler
+from ..base_handler import ModelHandler
 from transformers import AutoTokenizer
 import torch
 import time
