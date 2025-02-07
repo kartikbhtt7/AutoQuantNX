@@ -1,4 +1,4 @@
-# 🤗 AutoQuantNX
+# 🤗 AutoQuantNX (**Still under development and testing phase**)
 
 ## Overview
 AutoQuantNX is a powerful Gradio-based web application designed to simplify the process of optimizing and deploying Hugging Face models. It supports a wide range of tasks, including quantization, ONNX conversion, and seamless integration with the Hugging Face Hub. With AutoQuantNX, you can easily convert models to ONNX format, apply quantization techniques, and push the optimized models to your Hugging Face account—all through an intuitive user interface.
