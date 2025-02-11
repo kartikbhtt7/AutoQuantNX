@@ -4,7 +4,7 @@ import logging
 import numpy as np
 from dataclasses import dataclass
 from typing import Dict, Any, Optional
-
+import json
 logger = logging.getLogger(__name__)
 
 @dataclass
@@ -46,13 +46,21 @@ class ModelHandler:
 
     @staticmethod
     def _convert_to_serializable(obj):
-        """Convert numpy types to Python native types for JSON serialization"""
+        """Serialization for metrics"""
+        if isinstance(obj, np.generic):
+            return obj.item()
         if isinstance(obj, (np.float32, np.float64)):
             return float(obj)
-        elif isinstance(obj, (np.int32, np.int64)):
+        if isinstance(obj, (np.int32, np.int64)):
             return int(obj)
-        elif isinstance(obj, np.ndarray):
+        if isinstance(obj, np.ndarray):
             return obj.tolist()
+        if isinstance(obj, torch.Tensor):
+            return obj.cpu().numpy().tolist()
+        if isinstance(obj, dict):
+            return {k: ModelHandler._convert_to_serializable(v) for k, v in obj.items()}
+        if isinstance(obj, list):
+            return [ModelHandler._convert_to_serializable(v) for v in obj]
         return obj
 
     def _format_metric_value(self, value):
@@ -121,6 +129,20 @@ class ModelHandler:
     def get_metrics(self) -> Dict[str, Any]:
         """Return the metrics dictionary"""
         if self.metrics is None:
-            raise ValueError("No metrics available.")
-        return self.metrics
+            return {
+                "model_sizes": {"original": 0.0, "quantized": 0.0},
+                "inference_times": {"original": 0.0, "quantized": 0.0},
+                "comparison_metrics": {}
+            }
+        serializable_metrics = self._convert_to_serializable(self.metrics)
+        try:
+            json.dumps(serializable_metrics)
+            return serializable_metrics
+        except (TypeError, ValueError) as e:
+            logger.error(f"Error serializing metrics: {str(e)}")
+            return {
+                "model_sizes": {"original": 0.0, "quantized": 0.0},
+                "inference_times": {"original": 0.0, "quantized": 0.0},
+                "comparison_metrics": {}
+            }
     

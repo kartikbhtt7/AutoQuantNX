@@ -47,7 +47,7 @@ def convert_to_onnx(model_name, task, output_dir):
     ORTModelClass, ProcessorClass = TASK_MAPPING[task]
 
     try:
-        if task == "embedding_finetuning":
+        if task == "embedding":
             ort_optimizer = ORTOptimizer.from_pretrained(model_name)
             ort_optimizer.export(output_dir=output_dir, task="feature-extraction")
         else:

@@ -5,9 +5,9 @@ from .nlp_models.token_classification_handler import TokenClassificationHandler
 from .nlp_models.causal_lm_handler import CausalLMHandler
 from .nlp_models.embedding_model_handler import EmbeddingModelHandler
 from .audio_models.whisper_handler import WhisperHandler
-from .masked_lm_handler import MaskedLMHandler
-from .seq2seq_lm_handler import Seq2SeqLMHandler
-from .multiple_choice_handler import MultipleChoiceHandler
+from .nlp_models.masked_lm_handler import MaskedLMHandler
+from .nlp_models.seq2seq_lm_handler import Seq2SeqLMHandler
+from .nlp_models.multiple_choice_handler import MultipleChoiceHandler
 from .img_models.image_classification_handler import ImageClassificationHandler
 
 from transformers import (
@@ -22,7 +22,7 @@ from transformers import (
 )
 
 TASK_CONFIGS = {
-    "embedding_finetuning": {
+    "embedding": {
         "model_class": AutoModel,
         "handler_class": EmbeddingModelHandler,
         "example_text": "Hey, I am feeling way to good to be true.",
@@ -40,7 +40,7 @@ TASK_CONFIGS = {
     "question_answering": {
         "model_class": AutoModelForQuestionAnswering,
         "handler_class": QuestionAnsweringHandler,
-        "example_text": "The pyramids were built in ancient Egypt. QUES: When were the pyramids built?",
+        "example_text": "The pyramids were built in ancient Egypt. QUES: Where were the pyramids built?",
     },
     "causal_lm": {
         "model_class": AutoModelForCausalLM,

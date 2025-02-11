@@ -1,4 +1,4 @@
-# 🤗 AutoQuantNX (**Still under development and testing phase**)
+# 🤗 AutoQuantNX (**Still under testing and improvement phase**)
 
 ## Overview
 AutoQuantNX is a powerful Gradio-based web application designed to simplify the process of optimizing and deploying Hugging Face models. It supports a wide range of tasks, including quantization, ONNX conversion, and seamless integration with the Hugging Face Hub. With AutoQuantNX, you can easily convert models to ONNX format, apply quantization techniques, and push the optimized models to your Hugging Face account—all through an intuitive user interface.
@@ -47,35 +47,40 @@ Compares original and quantized models using metrics like:
 
 ## File Structure
 ```
-.
-├── src
-│   ├── app.py                                     # Gradio web application
-│   ├── handlers/                                  # Task-specific model handlers
-│   │   ├── base_handler.py                           # Base class for all handlers
-│   │   ├── causal_lm_handler.py                      # Handler for causal language models
-│   │   ├── embedding_model_handler.py                # Handler for embedding models
-│   │   ├── question_answering_handler.py             # Handler for question answering
-│   │   ├── sequence_classification_handler.py        # Handler for text classification
-│   │   ├── token_classification_handler.py           # Handler for NER
-│   │   ├── whisper_handler.py                        # Handler for Whisper models
-│   │   ├── masked_lm_handler.py                      # Handler for masked language models
-│   │   ├── seq2seq_lm_handler.py                     # Handler for sequence-to-sequence models
-│   │   ├── multiple_choice_handler.py                # Handler for multiple-choice models
-│   │   └── image_classification_handler.py           # Placeholder for image classification
-│   ├── optimization/                              # Optimization logic
-│   │   ├── onnx_conversion.py                        # ONNX conversion and quantization
-│   │   └── quantize.py                               # Quantization management
-│   ├── utilities/                                 # Utility functions
-│   │   ├── push_to_hub.py                            # Pushing models to Hugging Face Hub
-│   │   └── resources.py                              # Resource management
-│   └── __init__.py                                # Package initialization
-├── README.md                                      # Documentation
-└── requirements.txt                               # Python dependencies
+AutoQuantNX/
+├── src/
+│   ├── handlers/
+│   │   ├── audio_models/
+│   │   │   └── whisper_handler.py
+│   │   ├── img_models/
+│   │   │   └── image_classification_handler.py
+│   │   ├── nlp_models/
+│   │   │   ├── causal_lm_handler.py
+│   │   │   ├── embedding_model_handler.py
+│   │   │   ├── masked_lm_handler.py
+│   │   │   ├── multiple_choice_handler.py
+│   │   │   ├── question_answering_handler.py
+│   │   │   ├── seq2seq_lm_handler.py
+│   │   │   ├── sequence_classification_handler.py
+│   │   │   └── token_classification_handler.py
+│   │   ├── __init__.py
+│   │   └── base_handler.py
+│   ├── optimizations/
+│   │   ├── onnx_conversion.py
+│   │   └── quantize.py
+│   └── utilities/
+│       ├── push_to_hub.py
+│       └── resources.py
+├── README.md
+├── app.py
+├── poetry.lock
+├── pyproject.toml
+└── requirements.txt
 ```
 
 ## Prerequisites
 
-### Using requirements.txt
+### Using requirements.txt (Not preferable to me atleast)
 * Python 3.8 or higher
 * Install dependencies:
   ```bash
@@ -131,9 +136,6 @@ The app will be accessible at http://localhost:7860 by default.
 6. Push to Hub:
    * Optimized models are automatically pushed to your specified Hugging Face repository
 
-7. Cleanup:
-   * Use the "Cleanup Files" button to remove temporary files
-
 ### Example
 For a model like bert-base-uncased performing text classification:
 1. Select text_classification as the task
@@ -163,7 +165,6 @@ For a model like bert-base-uncased performing text classification:
 ## Notes
 * Ensure you have sufficient system resources for model conversion and quantization
 * Use a Hugging Face Hub token with proper write permissions for pushing models
-* Clean up temporary files regularly to free up disk space
 
 ## Troubleshooting
 * Model Conversion Fails: Ensure the model and task are supported

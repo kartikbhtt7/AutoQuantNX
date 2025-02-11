@@ -1,14 +1,14 @@
 import gradio as gr
 import logging
 from typing import Tuple, Dict, Any
-from utilities.resources import ResourceManager
-from utilities.push_to_hub import push_to_hub
-from optimizations.onnx_conversion import convert_to_onnx
-from optimizations.quantize import quantize_onnx_model
-from handlers import get_model_handler, TASK_CONFIGS
-import numpy as np
+from src.utilities.resources import ResourceManager
+from src.utilities.push_to_hub import push_to_hub
+from src.optimizations.onnx_conversion import convert_to_onnx
+from src.optimizations.quantize import quantize_onnx_model
+from src.handlers import get_model_handler, TASK_CONFIGS
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+import json
 
 def process_model(
     model_name: str,
@@ -29,11 +29,13 @@ def process_model(
             "current_step": "Initializing",
         }
 
+        metrics = {}
+
         if not model_name or not hf_token or not repo_name:
             return (
                 {"status": "Error", "progress": 0, "current_step": "Validation Failed"},
                 "Model name, HuggingFace token, and repository name are required.",
-                {}
+                metrics
             )
 
         status["progress"] = 0.2
@@ -53,6 +55,7 @@ def process_model(
                 handler = get_model_handler(task, model_name, quantization_type, test_text)
                 quantized_model = handler.compare()
                 metrics = handler.get_metrics()
+                metrics = json.loads(json.dumps(metrics))
 
                 quantized_model_path = str(resource_manager.temp_dirs["quantized"] / "model")
                 quantized_model.save_pretrained(quantized_model_path)
@@ -62,7 +65,7 @@ def process_model(
                 return (
                     {"status": "Error", "progress": 0.4, "current_step": "Quantization Failed"},
                     f"Quantization failed: {str(e)}",
-                    {}
+                    metrics
                 )
 
         if enable_onnx:
@@ -74,11 +77,11 @@ def process_model(
                 onnx_result = convert_to_onnx(model_name, task, output_dir)
 
                 if onnx_result is None:
-                    return {
-                        "status": "Error",
-                        "progress": 0.6,
-                        "current_step": "ONNX Conversion Failed",
-                    }, "ONNX conversion failed."
+                    return (
+                        {"status": "Error", "progress": 0.6, "current_step": "ONNX Conversion Failed"},
+                        "ONNX conversion failed.",
+                        metrics
+                    )
 
                 if onnx_quantization != "None":
                     status_updates.append(f"Applying {onnx_quantization} ONNX quantization")
@@ -95,11 +98,11 @@ def process_model(
                 status_updates.append(push_message)
             except Exception as e:
                 logger.error(f"ONNX error: {str(e)}", exc_info=True)
-                return {
-                    "status": "Error",
-                    "progress": 0.6,
-                    "current_step": "ONNX Processing Failed",
-                }, f"ONNX processing failed: {str(e)}"
+                return (
+                    {"status": "Error", "progress": 0.6, "current_step": "ONNX Processing Failed"},
+                    f"ONNX processing failed: {str(e)}",
+                    metrics
+                )
 
         if quantization_type != "None" and quantized_model_path:
             status.update({"progress": 0.9, "current_step": "Pushing Quantized Model"})
@@ -127,7 +130,7 @@ def process_model(
         return (
             {"status": "Error", "progress": 0, "current_step": "Process Failed"},
             f"An error occurred: {str(e)}",
-            {}
+            metrics
         )
 
 # Gradio Interface
@@ -160,16 +163,21 @@ with gr.Blocks(theme=gr.themes.Soft()) as app:
 
         with gr.Column(scale=1):
             status_output = gr.JSON(label="Status", value={"status": "Ready", "progress": 0, "current_step": "Waiting"})
-            progress_bar = gr.Progress()
             message_output = gr.Markdown(label="Progress Messages")
 
             gr.Markdown("### Metrics")
-            with gr.Box():
-                metrics_output = gr.JSON(show_label=True)
+            with gr.Group():
+                metrics_output = gr.JSON(
+                    value={
+                        "model_sizes": {"original": 0.0, "quantized": 0.0},
+                        "inference_times": {"original": 0.0, "quantized": 0.0},
+                        "comparison_metrics": {}
+                    },
+                    show_label=True
+                )
 
             memory_info = gr.JSON(label="Resource Usage")
             convert_btn = gr.Button("🚀 Start Conversion", variant="primary")
-            cleanup_btn = gr.Button("🧹 Cleanup Files", variant="secondary")
 
             with gr.Accordion("ℹ️ Help", open=False):
                 gr.Markdown("""
@@ -182,7 +190,6 @@ with gr.Blocks(theme=gr.themes.Soft()) as app:
                 ### Tips
                 - Ensure sufficient system resources.
                 - Use test text to validate conversions.
-                - Clean up temporary files after completion.
                 """)
 
     def update_memory_info():
@@ -198,8 +205,7 @@ with gr.Blocks(theme=gr.themes.Soft()) as app:
         inputs=[model_name, task, quantization_type, enable_onnx, onnx_quantization, hf_token, repo_name, test_text],
         outputs=[status_output, message_output, metrics_output]
     )
-
-    cleanup_btn.click(lambda: ResourceManager().cleanup_temp_files(), outputs=[message_output]).then(update_memory_info, outputs=[memory_info])
+    app.load(update_memory_info, outputs=[memory_info], every=30)
 
 if __name__ == "__main__":
     app.launch(server_name="0.0.0.0", server_port=7860, share=True, debug=True)

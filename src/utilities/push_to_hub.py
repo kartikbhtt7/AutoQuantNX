@@ -56,7 +56,6 @@ library_name: optimum
 This model has been optimized and uploaded to the HuggingFace Hub.
 
 ## Model Details
-- Original Repository: {repo_name}
 - Optimization Tags: {', '.join(tags_list)}
 """
             with open(os.path.join(local_path, "README.md"), "w") as f:

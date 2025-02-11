@@ -5,10 +5,10 @@ class WhisperHandler(ModelHandler):
         super().__init__(model_name, model_class, quantization_type, test_text)
 
     def run_inference(self, model, text):
-        raise NotImplementedError("Image classification is not implemented.")
+        raise NotImplementedError("STT is not implemented.")
 
     def decode_output(self, outputs):
-        raise NotImplementedError("Image classification is not implemented.")
+        raise NotImplementedError("STT is not implemented.")
 
     def compare_outputs(self, original_outputs, quantized_outputs):
-        raise NotImplementedError("Image classification is not implemented.")
+        raise NotImplementedError("STT is not implemented.")
