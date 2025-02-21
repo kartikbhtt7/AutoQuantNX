@@ -1,3 +1,6 @@
+import sys
+import os
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), 'src')))
 import gradio as gr
 import logging
 from typing import Tuple, Dict, Any

@@ -5,6 +5,10 @@ description = "Webapp to quantize and convert to ONNX HF models in go and compar
 authors = ["kartikbhtt7 <kartikbhtt7@gmail.com>"]
 readme = "README.md"
 
+packages = [
+    { include = "src" }
+]
+
 [tool.poetry.dependencies]
 python = ">=3.10,<3.12"
 gradio = "^4.00.0"

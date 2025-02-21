@@ -1,7 +1,15 @@
-# 🤗 AutoQuantNX (**Still under testing and improvement phase**)
+---
+title: AutoQuantNX
+app_file: app.py
+sdk: gradio
+sdk_version: 4.44.1
+---
+# 🤗 [AutoQuantNX](https://huggingface.co/spaces/smokxy/AutoQuantNX)
 
 ## Overview
 AutoQuantNX is a powerful Gradio-based web application designed to simplify the process of optimizing and deploying Hugging Face models. It supports a wide range of tasks, including quantization, ONNX conversion, and seamless integration with the Hugging Face Hub. With AutoQuantNX, you can easily convert models to ONNX format, apply quantization techniques, and push the optimized models to your Hugging Face account—all through an intuitive user interface.
+
+## ```In the deployed UI, only 16 Bit quantization works because of GPU requirement of BitsAndBytes and no GPU availability in free HF space.```
 
 ## Features
 
